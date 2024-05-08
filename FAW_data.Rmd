@@ -136,4 +136,177 @@ print(boxplot_collect_number_egg)
 ```
 
 
+```{r}
+# Read the data
+Rod_la <- read.csv("/Users/fabriceg/Rodolphe/Larva_rod.csv", header = TRUE, sep = ",")
+
+# Rename columns
+names(Rod_la) <- c('date', 'season', 'collect_number', 'plot', 'larvae', 'rh2m_%', 'precipitation', 't2m_Max', 't2m_Min', 't2m_avairage')
+
+# Convert columns to factors
+Rod_la$date <- as.factor(Rod_la$date)
+Rod_la$season <- as.factor(Rod_la$season)
+Rod_la$collect_number <- as.factor(Rod_la$collect_number)
+Rod_la$plot <- as.factor(Rod_la$plot)
+
+# Print the structure of the dataframe
+str(Rod_la)
+
+#Percentage of controlled variability
+print(anovaVCA(larvae ~ season + season:collect_number, Data = Rod_la))
+
+# Perform linear regression
+aov_result11 <- lm(larvae ~ season + collect_number + season:collect_number, data = Rod_la)
+summary(aov_result11)
+
+# Perform anova
+aov_result1 <- aov(larvae ~ season + collect_number + season:collect_number, data = Rod_la)
+summary(aov_result1)
+
+# Set contrast coding
+contrasts(Rod_la$season) <- contr.treatment(levels(Rod_la$season))
+contrasts(Rod_la$collect_number) <- contr.treatment(levels(Rod_la$collect_number))
+
+# Convert collect_number to numeric
+Rod_la$collect_number <- as.numeric(as.character(Rod_la$collect_number))
+
+# Compute correlation between collect_number and larvae
+correlation_collect_number_larvae <- cor.test(Rod_la$collect_number, Rod_la$larvae)
+
+# Print correlation coefficient
+print("Correlation coefficient for collect_number and larvae:")
+print(correlation_collect_number_larvae$estimate)
+
+# Print p-value
+print("P-value for collect_number and larvae:")
+print(correlation_collect_number_larvae$p.value)
+
+# Compute R-squared
+r_squared_collect_number_larvae <- correlation_collect_number_larvae$estimate^2
+
+# Print R-squared
+print("R-squared for collect_number and larvae:")
+print(r_squared_collect_number_larvae)
+
+
+# Compute correlation between precipitation and larvae
+correlation_precipitation_larvae <- cor.test(Rod_la$precipitation, Rod_la$larvae)
+
+# Print correlation coefficient
+print("Correlation coefficient for precipitation and larvae:")
+print(correlation_precipitation_larvae$estimate)
+
+# Print p-value
+print("P-value for precipitation and larvae:")
+print(correlation_precipitation_larvae$p.value)
+
+# Compute R-squared
+r_squared_precipitation_larvae <- correlation_precipitation_larvae$estimate^2
+
+# Print R-squared
+print("R-squared for precipitation and larvae:")
+print(r_squared_precipitation_larvae)
+
+
+# Compute correlation between temperature and larvae
+correlation_temperature_larvae <- cor.test(Rod_la$t2m_avairage, Rod_la$larvae)
+
+# Print correlation coefficient
+print("Correlation coefficient for temperature and larvae:")
+print(correlation_temperature_larvae$estimate)
+
+# Print p-value
+print("P-value for temperature and larvae:")
+print(correlation_temperature_larvae$p.value)
+
+# Compute R-squared
+r_squared_temperature_larvae <- correlation_temperature_larvae$estimate^2
+
+# Print R-squared
+print("R-squared for temperature and larvae:")
+print(r_squared_temperature_larvae)
+
+
+# Box plot for season and larvae
+boxplot_season_larvae <- ggplot(Rod_la, aes(x = season, y = larvae)) +
+  geom_boxplot() +
+  labs(x = "Season", y = "Larvae") +
+  theme_minimal()  # Optional: Apply a minimal theme
+
+# Print the box plot for season and larvae
+print(boxplot_season_larvae)
+
+Rod_la$collect_number <- as.factor(Rod_la$collect_number)
+
+# Box plot for collect_number and larvae
+boxplot_collect_number_larvae <- ggplot(Rod_la, aes(x = collect_number, y = larvae)) +
+  geom_boxplot() +
+  labs(x = "Weeks", y = "Larvae") +
+  theme_minimal()  # Optional: Apply a minimal theme
+
+# Print the box plot for collect_number and larvae
+print(boxplot_collect_number_larvae)
+```
+
+
+```{r}
+Rod_da <- read.csv("/Users/fabriceg/Rodolphe/Damage_rod.csv", header = TRUE, sep = ",")
+names(Rod_da)
+
+names <- c('date','season', 'collect_number', 'plot','plant_damage','damage_level', 'rh2m_%', 'precipitation', 't2m_Max', 't2m_Min','t2m_avairage')
+
+Rod_da$date = as.factor(Rod_da$date)
+Rod_da$season = as.factor(Rod_da$season)
+Rod_da$collect_number = as.factor(Rod_da$collect_number)
+Rod_da$plot = as.factor(Rod_da$plot)
+
+
+str(Rod_da)
+
+#Percentage of controled variability
+anovaVCA(damage_level ~ collect_number, Data=Rod_da);
+
+#Multinomial regression
+
+R1 <- multinom(damage_level ~ collect_number, data = Rod_da)
+summary(R1)
+
+wald_statistics1 <- summary(R1)$coefficients/summary(R1)$standard.errors
+p_values1 <- 2 * (1 - pnorm(abs(wald_statistics1)))
+
+print(data.frame("Pr(>|z|)" = p_values1))
+
+R2 <- multinom(damage_level ~ plot, data = Rod_da)
+summary(R2)
+
+wald_statistics2 <- summary(R2)$coefficients/summary(R2)$standard.errors
+p_values2 <- 2 * (1 - pnorm(abs(wald_statistics2)))
+
+print(data.frame("Pr(>|z|)" = p_values2))
+
+R3 <- multinom(damage_level ~ collect_number:plot, data = Rod_da)
+summary(R3)
+
+Rod_da$damage_level = as.factor(Rod_da$damage_level)
+# Set a common theme with reduced font size
+common_theme <- theme_minimal(base_size = 7)
+
+# Create ggplots
+plot1 <- ggplot(Rod_da, aes(x = plot, fill = damage_level)) +
+  geom_bar(position = "stack") +
+  labs(title = "Frequency of damage level by plot",
+       x = "plots", y = "Frequency") +
+  common_theme
+
+plot2 <- ggplot(Rod_da, aes(x = collect_number, fill = damage_level)) +
+  geom_bar(position = "stack") +
+  labs(title = "Frequency of damage level by week",
+       x = "Weeks", y = "Frequency") +
+  common_theme
+
+# Arrange plots in a 2x2 grid
+grid.arrange(plot1, plot2, ncol = 2)
+```
+
+
 
