@@ -1,0 +1,139 @@
+---
+title: "Data_Rodolphe"
+author: "Fabrice"
+date: "2024-05-06"
+output:
+word_document: default
+pdf_document: default
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+
+library(patchwork)
+library(gridExtra)
+library(ggplot2)
+library(broom)
+library(lmtest)
+library(nnet)
+library(forcats)
+library(car)
+library(MASS)
+library(ordinal)
+library(geepack)
+library(dplyr)
+library(readxl)
+library(VCA)
+```
+
+
+```{r}
+Rod_eg <- read.csv("/Users/fabriceg/Rodolphe/Egg_rod.csv", header = TRUE, sep = ",")
+names(Rod_eg)
+
+names <- c('date','season', 'collect_number', 'plot', 'FAW_egg','rh2m_%', 'precipitation', 't2m_Max', 't2m_Min','t2m_avairage')
+
+Rod_eg$date = as.factor(Rod_eg$date)
+Rod_eg$season = as.factor(Rod_eg$season)
+Rod_eg$collect_number = as.factor(Rod_eg$collect_number)
+Rod_eg$plot = as.factor(Rod_eg$plot)
+
+str(Rod_eg)
+
+#Percentage of controled variability
+anovaVCA(FAW_egg ~ season + season:collect_number, Data=Rod_eg);
+
+aov_result <- aov(FAW_egg ~ season + collect_number + plot + season:collect_number + season:plot + collect_number:plot + season*collect_number*plot, data = Rod_eg)
+summary(aov_result)
+
+aov_result21 <- lm(FAW_egg ~ season + collect_number + season:collect_number, data = Rod_eg)
+summary(aov_result21)
+
+# Set contrast coding
+contrasts(Rod_eg$season) <- contr.treatment(levels(Rod_eg$season))
+contrasts(Rod_eg$collect_number) <- contr.treatment(levels(Rod_eg$collect_number))
+
+# Convert collect_number to numeric
+Rod_eg$collect_number <- as.numeric(as.character(Rod_eg$collect_number))
+
+# Compute correlation between collect_number and larvae
+correlation_collect_number_egg <- cor.test(Rod_eg$collect_number, Rod_eg$FAW_egg)
+
+# Print correlation coefficient
+print("Correlation coefficient for collect_number and FAW_egg:")
+print(correlation_collect_number_egg$estimate)
+
+# Print p-value
+print("P-value for collect_number and FAW_egg:")
+print(correlation_collect_number_egg$p.value)
+
+# Compute R-squared
+r_squared_collect_number_egg <- correlation_collect_number_egg$estimate^2
+
+# Print R-squared
+print("R-squared for collect_number and larvae:")
+print(r_squared_collect_number_egg)
+
+
+# Compute correlation between precipitation and larvae
+correlation_precipitation_egg <- cor.test(Rod_eg$precipitation, Rod_eg$FAW_egg)
+
+# Print correlation coefficient
+print("Correlation coefficient for precipitation and larvae:")
+print(correlation_precipitation_egg$estimate)
+
+# Print p-value
+print("P-value for precipitation and larvae:")
+print(correlation_precipitation_egg$p.value)
+
+# Compute R-squared
+r_squared_precipitation_egg <- correlation_precipitation_egg$estimate^2
+
+# Print R-squared
+print("R-squared for precipitation and FAW_egg:")
+print(r_squared_precipitation_egg)
+
+
+# Compute correlation between temperature and FAW_egg
+correlation_temperature_egg <- cor.test(Rod_eg$t2m_avairage, Rod_eg$FAW_egg)
+
+# Print correlation coefficient
+print("Correlation coefficient for temperature and FAW_egg:")
+print(correlation_temperature_egg$estimate)
+
+# Print p-value
+print("P-value for temperature and FAW_egg:")
+print(correlation_temperature_egg$p.value)
+
+# Compute R-squared
+r_squared_temperature_egg <- correlation_temperature_egg$estimate^2
+
+# Print R-squared
+print("R-squared for temperature and FAW_egg:")
+print(r_squared_temperature_egg)
+
+
+# Box plot for season and FAW_egg
+boxplot_season_egg <- ggplot(Rod_eg, aes(x = season, y = FAW_egg)) +
+  geom_boxplot() +
+  labs(x = "Season", y = "FAW_egg") +
+  theme_minimal()  # Optional: Apply a minimal theme
+
+# Print the box plot for season and larvae
+print(boxplot_season_egg)
+
+Rod_eg$collect_number <- as.factor(Rod_eg$collect_number)
+
+# Box plot for collect_number and larvae
+boxplot_collect_number_egg <- ggplot(Rod_eg, aes(x = collect_number, y = FAW_egg)) +
+  geom_boxplot() +
+  labs(x = "Weeks", y = "FAW_egg") +
+  theme_minimal()  # Optional: Apply a minimal theme
+
+# Print the box plot for collect_number and larvae
+print(boxplot_collect_number_egg)
+```
+
+
+
